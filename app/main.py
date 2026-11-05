@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from app.api.v1.emergency_requests import router as emergency_request_router
 
 from app.database.session import get_db
 
@@ -9,7 +10,7 @@ app = FastAPI(
     description="Emergency Ambulance Coordination System",
     version="1.0.0"
 )
-
+app.include_router(emergency_request_router)
 
 @app.get("/")
 def home():
