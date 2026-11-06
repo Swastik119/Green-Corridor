@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.database.session import get_db
-from app import auth, users  # <--- Imported directly from app
+from app.api.v1.emergency_requests import router as emergency_request_router
+from app import auth, users
+
 
 app = FastAPI(
     title="Green Corridor API",
@@ -11,8 +13,12 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Phase 3 routers
 app.include_router(auth.router)
 app.include_router(users.router)
+
+# Phase 4 router
+app.include_router(emergency_request_router)
 
 
 @app.get("/")
