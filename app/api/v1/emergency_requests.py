@@ -7,11 +7,14 @@ from app.schemas.emergency_request import (
     EmergencyRequestResponse
 )
 from app.services.emergency_request_service import create_emergency_request
+from app.deps import require_role
+from app.models.user import User
 
 router = APIRouter(
     prefix="/emergency-requests",
     tags=["Emergency Requests"]
 )
+
 
 @router.post(
     "/",
@@ -20,14 +23,14 @@ router = APIRouter(
 )
 def create_request(
     request: EmergencyRequestCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("ambulance_operator"))
 ):
-
     try:
         new_request = create_emergency_request(
             db=db,
             ambulance_id=request.ambulance_id,
-            requested_by=1,  # Temporary test user; authentication comes in Phase 3
+            requested_by=current_user.id,
             destination_hospital_id=request.destination_hospital_id,
             pickup_latitude=request.pickup_latitude,
             pickup_longitude=request.pickup_longitude,
@@ -49,7 +52,7 @@ def create_request(
         raise HTTPException(
             status_code=status_code,
             detail=error_message
-    )
+        )
 
     except Exception:
         raise HTTPException(
