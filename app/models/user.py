@@ -1,3 +1,4 @@
+import enum
 from sqlalchemy import (
     BigInteger,
     String,
@@ -14,6 +15,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base
 
 
+class UserRole(str, enum.Enum):
+    ADMIN = "admin"
+    AMBULANCE_OPERATOR = "ambulance_operator"
+    POLICE_OFFICER = "police_officer"
+    HOSPITAL_STAFF = "hospital_staff"
+
+
 class User(Base):
 
     __tablename__ = "users"
@@ -23,7 +31,7 @@ class User(Base):
             name="check_user_role"
         ),
         Index("idx_users_role", "role"),
-Index("idx_users_is_active", "is_active"),
+        Index("idx_users_is_active", "is_active"),
     )
 
     id: Mapped[int] = mapped_column(
@@ -77,6 +85,7 @@ Index("idx_users_is_active", "is_active"),
         onupdate=func.now(),
         nullable=False
     )
+
     operated_ambulances = relationship(
         "Ambulance",
         back_populates="current_operator"

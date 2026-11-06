@@ -3,12 +3,16 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.database.session import get_db
+from app import auth, users  # <--- Imported directly from app
 
 app = FastAPI(
     title="Green Corridor API",
     description="Emergency Ambulance Coordination System",
     version="1.0.0"
 )
+
+app.include_router(auth.router)
+app.include_router(users.router)
 
 
 @app.get("/")
