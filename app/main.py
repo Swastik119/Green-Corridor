@@ -4,6 +4,7 @@ from sqlalchemy import text
 
 from app.database.session import get_db
 from app.api.v1.emergency_requests import router as emergency_request_router
+from app.api.v1 import routing  # <--- 1. Import your new routing module
 from app import auth, users
 
 
@@ -19,6 +20,9 @@ app.include_router(users.router)
 
 # Phase 4 router
 app.include_router(emergency_request_router)
+
+# Phase 5 router
+app.include_router(routing.router)  # <--- 2. Register your routing router here
 
 
 @app.get("/")
