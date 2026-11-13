@@ -12,6 +12,7 @@ class RouteRequest(BaseModel):
     end_latitude: float
     end_longitude: float
 
+
 @router.post("/")
 def calculate_ambulance_route(data: RouteRequest, db: Session = Depends(get_db)):
     route_data = get_route_from_osrm(
