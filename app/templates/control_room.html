@@ -206,8 +206,86 @@
         <span>🚦 Junction</span>
       </div>
     </div>
+    <!-- Phase 9: Communication Health Status Bar -->
+    <div style="background: #F1F5F9; border-bottom: 1px solid #CBD5E1; padding: 6px 12px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+      <div>
+        <strong>Connection Health:</strong> <span class="tracking-status-badge badge badge-neutral" style="font-size:10px;">⚪ Standby</span>
+        <span style="margin-left: 10px;"><strong>Last GPS:</strong> <span class="last-gps-time" style="color:#07899E;">-</span></span>
+        <span style="margin-left: 10px;"><strong>Offline Queue:</strong> <span class="offline-queue-count badge badge-neutral" style="font-size:10px;">0</span> pending</span>
+        <span style="margin-left: 10px;"><strong>Last Sync:</strong> <span class="last-sync-time" style="color:#218653;">-</span></span>
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <button type="button" class="btn btn-secondary btn-sm" style="font-size:10px; padding: 2px 6px;" onclick="window.GC_TRACKER.syncPendingOfflineUpdates(selectedMissionId || 'GC-2024-001')">🔄 Sync Offline Queue</button>
+        <button type="button" class="btn btn-primary btn-sm" style="font-size:10px; padding: 2px 6px;" onclick="window.GC_AI.evaluateMissionRisk(selectedMissionId || 'GC-2024-001')">⚡ Run AI Risk Assessment</button>
+      </div>
+    </div>
     <div class="section-panel-body" style="padding: 0;">
       <div id="control-room-map" class="map-container"></div>
+    </div>
+  </div>
+
+  <!-- Phase 10: AI Mission Intelligence & Dynamic Response Section -->
+  <div class="section-panel" id="ai-intelligence-panel">
+    <div class="section-panel-header" style="background: #0f172a; color: #fff;">
+      <span class="section-panel-title" style="color: #38bdf8;">🧠 Phase 10: AI Mission Intelligence & Delay Risk Prediction (XGBoost + SHAP)</span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 11px; color: #94a3b8;">Risk Tier:</span>
+        <span class="badge badge-green" id="ai-risk-badge">LOW</span>
+      </div>
+    </div>
+    <div class="section-panel-body">
+      <!-- Top Row: Risk Gauge & Suggested Action -->
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; margin-bottom: 12px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 10px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; margin-bottom: 6px;">
+            <span>Delay Probability</span>
+            <span id="ai-delay-prob" style="color: #07899E; font-size: 14px;">18%</span>
+          </div>
+          <div style="background: #e2e8f0; border-radius: 4px; height: 10px; overflow: hidden; margin-bottom: 8px;">
+            <div id="ai-delay-bar" style="width: 18%; height: 100%; background: #218653; transition: width 0.4s ease;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 9px; color: #64748b;">
+            <span>LOW (&lt;30%)</span>
+            <span>MED (30-59%)</span>
+            <span>HIGH (60-79%)</span>
+            <span>CRITICAL (&ge;80%)</span>
+          </div>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 10px;">
+          <div style="font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #334155;">Automated Operational Recommendation</div>
+          <p id="ai-action-suggestion" style="font-size: 11px; color: #475569; margin: 0; line-height: 1.4;">
+            🟢 Convoy speed and corridor clearance are optimal. Proceed along active green corridor.
+          </p>
+        </div>
+      </div>
+
+      <!-- Second Row: SHAP Contributing Factors & Alternative Route Review -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 10px;">
+          <div style="font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #334155;">
+            🔍 SHAP Explainability (Top Delay Drivers)
+          </div>
+          <div id="ai-shap-factors">
+            <div style="font-size: 11px; color: #64748b;">Evaluating feature contributions...</div>
+          </div>
+        </div>
+
+        <!-- Alternative Route Card (Human-in-the-Loop) -->
+        <div id="ai-alternative-route-card" style="display: none; background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 4px; padding: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <strong style="color: #92400E; font-size: 12px;">⚡ Recommended Alternative Corridor Available</strong>
+            <span class="badge badge-warning" style="font-size: 10px;">Saves <span id="ai-alt-time-saved">3.2 mins</span></span>
+          </div>
+          <div style="font-size: 11px; color: #78350F; margin-bottom: 8px;">
+            <strong>New Predicted ETA:</strong> <span id="ai-alt-eta">8.8 mins</span><br>
+            <span id="ai-alt-notes">Bypasses congested Ring Road bottleneck via Barapullah arterial.</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-success btn-sm" style="font-size: 11px; padding: 3px 10px;" onclick="window.GC_AI.approveAlternativeRoute()">✅ Approve Route Change</button>
+            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 3px 10px;" onclick="window.GC_AI.rejectAlternativeRoute()">Maintain Current Route</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

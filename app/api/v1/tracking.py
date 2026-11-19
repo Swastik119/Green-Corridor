@@ -20,6 +20,8 @@ from app.schemas.tracking import (
     GPSUpdateResponse,
     SimulatorConfig,
     SimulatorStatus,
+    SyncBatchRequest,
+    SyncBatchResponse,
 )
 from app.websocket.manager import tracking_ws_manager
 from app.services.gps_simulator import gps_simulator
@@ -31,6 +33,9 @@ router = APIRouter(prefix="/api/v1/tracking", tags=["Real-Time Tracking"])
 
 # In-memory recent GPS history ring buffer: mission_id -> deque of recent updates (max 100)
 _GPS_HISTORY: dict[str, deque[dict]] = defaultdict(lambda: deque(maxlen=100))
+
+# Idempotency tracking to prevent duplicate ingestion of offline updates
+_SEEN_IDEMPOTENCY_KEYS: set[str] = set()
 
 
 @router.post(
@@ -186,3 +191,88 @@ def get_subscribers(mission_id: Optional[str] = Query(None)):
         "active_subscribers": tracking_ws_manager.get_active_count(mission_id),
         "active_missions": tracking_ws_manager.get_active_missions(),
     }
+
+
+@router.post(
+    "/sync",
+    response_model=SyncBatchResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Batch synchronize offline queued GPS updates upon reconnection",
+)
+async def sync_offline_gps(
+    batch: SyncBatchRequest,
+):
+    """
+    Ingests and validates queued offline GPS telemetry records once network is restored.
+    Applies idempotency filtering to prevent duplicates and updates telemetry history chronologically.
+    """
+    global _SEEN_IDEMPOTENCY_KEYS
+
+    received = len(batch.updates)
+    synced = 0
+    skipped = 0
+    latest_ts = None
+    latest_item = None
+
+    # Sort updates chronologically by timestamp
+    sorted_updates = sorted(batch.updates, key=lambda x: x.timestamp)
+
+    for item in sorted_updates:
+        # Deduplication check
+        if item.idempotency_key in _SEEN_IDEMPOTENCY_KEYS:
+            skipped += 1
+            continue
+
+        _SEEN_IDEMPOTENCY_KEYS.add(item.idempotency_key)
+        # Prevent unbounded set growth
+        if len(_SEEN_IDEMPOTENCY_KEYS) > 10000:
+            _SEEN_IDEMPOTENCY_KEYS.clear()
+
+        # Build telemetry record
+        record = {
+            "mission_id": batch.mission_id,
+            "ambulance_id": batch.ambulance_id,
+            "latitude": item.latitude,
+            "longitude": item.longitude,
+            "speed": item.speed,
+            "heading": item.heading,
+            "timestamp": item.timestamp.isoformat(),
+            "is_simulated": item.is_simulated,
+            "is_offline_sync": True,
+        }
+
+        _GPS_HISTORY[batch.mission_id].append(record)
+        synced += 1
+
+        if latest_ts is None or item.timestamp > latest_ts:
+            latest_ts = item.timestamp
+            latest_item = record
+
+    # Broadcast synchronization notification over WebSocket
+    if synced > 0 and latest_item:
+        await tracking_ws_manager.broadcast_to_mission(
+            mission_id=batch.mission_id,
+            message_data={
+                "type": "gps_sync_completed",
+                "mission_id": batch.mission_id,
+                "synced_count": synced,
+                "duplicates_skipped": skipped,
+                "data": latest_item,
+            },
+        )
+
+    logger.info(
+        "Batch synced %d offline GPS updates for mission [%s] (%d duplicates skipped)",
+        synced,
+        batch.mission_id,
+        skipped,
+    )
+
+    return SyncBatchResponse(
+        status="success",
+        mission_id=batch.mission_id,
+        received_count=received,
+        synced_count=synced,
+        duplicates_skipped=skipped,
+        latest_synchronized_at=latest_ts,
+    )

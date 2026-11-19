@@ -62,3 +62,37 @@ class SimulatorStatus(BaseModel):
     is_running: bool
     active_missions: list[str] = Field(default_factory=list)
     details: dict[str, Any] = Field(default_factory=dict)
+
+
+class OfflineGPSItem(BaseModel):
+    """
+    Single offline queued GPS telemetry record.
+    """
+    idempotency_key: str = Field(..., description="Unique client-generated idempotency key")
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
+    speed: float = Field(..., ge=0.0, le=250.0)
+    heading: Optional[float] = Field(None, ge=0.0, le=360.0)
+    timestamp: datetime = Field(..., description="Original timestamp when recorded offline")
+    is_simulated: bool = Field(False)
+
+
+class SyncBatchRequest(BaseModel):
+    """
+    Batch payload sent by client upon network reconnection to synchronize pending GPS data.
+    """
+    mission_id: str = Field(..., description="Target mission identifier")
+    ambulance_id: str = Field(..., description="Target ambulance identifier")
+    updates: list[OfflineGPSItem] = Field(..., min_length=1, max_length=500, description="Chronological offline telemetry items")
+
+
+class SyncBatchResponse(BaseModel):
+    """
+    Result of batch synchronization.
+    """
+    status: str = "success"
+    mission_id: str
+    received_count: int
+    synced_count: int
+    duplicates_skipped: int
+    latest_synchronized_at: Optional[datetime] = None
