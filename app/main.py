@@ -11,6 +11,8 @@ from app.api.v1 import routing
 from app.api.v1 import notifications
 from app.api.v1.dashboard_api import router as dashboard_router
 from app.api.v1.tracking import router as tracking_router
+from app.api.v1.alerts import router as alerts_router
+from app.api.v1.ai import router as ai_router
 from app.websocket.routes import router as websocket_router
 from app import auth, users
 
@@ -62,6 +64,12 @@ app.include_router(dashboard_router)
 # Phase 8 – Real-Time Tracking & WebSockets
 app.include_router(tracking_router)
 app.include_router(websocket_router)
+
+# Phase 9 – Persistent Alerts & Fault-Tolerant Communication
+app.include_router(alerts_router)
+
+# Phase 10 – AI Mission Intelligence
+app.include_router(ai_router)
 
 # ---------------------------------------------------------------------------
 # Template routes – serve HTML pages

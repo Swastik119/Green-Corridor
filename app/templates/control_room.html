@@ -206,6 +206,18 @@
         <span>🚦 Junction</span>
       </div>
     </div>
+    <!-- Phase 9: Communication Health Status Bar -->
+    <div style="background: #F1F5F9; border-bottom: 1px solid #CBD5E1; padding: 6px 12px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+      <div>
+        <strong>Connection Health:</strong> <span class="tracking-status-badge badge badge-neutral" style="font-size:10px;">⚪ Standby</span>
+        <span style="margin-left: 10px;"><strong>Last GPS:</strong> <span class="last-gps-time" style="color:#07899E;">-</span></span>
+        <span style="margin-left: 10px;"><strong>Offline Queue:</strong> <span class="offline-queue-count badge badge-neutral" style="font-size:10px;">0</span> pending</span>
+        <span style="margin-left: 10px;"><strong>Last Sync:</strong> <span class="last-sync-time" style="color:#218653;">-</span></span>
+      </div>
+      <div>
+        <button type="button" class="btn btn-secondary btn-sm" style="font-size:10px; padding: 2px 6px;" onclick="window.GC_TRACKER.syncPendingOfflineUpdates(selectedMissionId || 'GC-2024-001')">🔄 Sync Offline Queue</button>
+      </div>
+    </div>
     <div class="section-panel-body" style="padding: 0;">
       <div id="control-room-map" class="map-container"></div>
     </div>
